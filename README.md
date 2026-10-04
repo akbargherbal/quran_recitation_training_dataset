@@ -7,6 +7,10 @@ approximately within the range spanned by that reciter's references.
 
 This implements `SPEC_audio_quality_filter.md`.
 
+> **Starting a new session / picking this up cold?** Read
+> [`SESSION_STATE.md`](SESSION_STATE.md) first (current state, backups, what
+> remains), then [`RUNBOOK.md`](RUNBOOK.md) for checkpoint/restore commands.
+
 ---
 
 ## 1. Install

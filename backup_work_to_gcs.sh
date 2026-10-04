@@ -46,6 +46,7 @@ fi
 ITEMS=(
   aqfilter tests pyproject.toml requirements.txt
   README.md SPEC_audio_quality_filter.md IMPLEMENTATION_PLAN.md RUNBOOK.md
+  SESSION_STATE.md
   refs.txt run_score_loop.sh backup_to_gcs.sh backup_work_to_gcs.sh
   score.log backup.log download.log
   thresholds.json plots results review review.zip
