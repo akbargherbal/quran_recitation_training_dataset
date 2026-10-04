@@ -1,0 +1,23 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+data/
+refs/
+*.egg-info/
+build/
+dist/
+# Large generated artifacts (regenerate via the CLI)
+REF_Quran_MP3.zip
+scores.csv
+scores.csv.log
+thresholds.json
+plots/
+review/
+review.zip
+results/
+download.log
+score.log
+score.stdout.log
+smoke_data/
+refs_extracted/
+*.log

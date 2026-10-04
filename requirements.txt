@@ -1,0 +1,11 @@
+# Install with:  pip install -r requirements.txt
+# Or install the package + console script with:  pip install -e .
+numpy>=1.23
+scipy>=1.10
+pandas>=2.0
+soundfile>=0.12
+librosa>=0.10
+speechmos>=0.0.1.1
+onnxruntime>=1.16
+matplotlib>=3.7
+tqdm>=4.65

@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aqfilter"
+version = "0.1.0"
+description = "Reference-calibrated audio quality filter for Quran recitation MP3s"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.23",
+    "scipy>=1.10",
+    "pandas>=2.0",
+    "soundfile>=0.12",
+    "librosa>=0.10",
+    "speechmos>=0.0.1.1",
+    "onnxruntime>=1.16",
+    "matplotlib>=3.7",
+    "tqdm>=4.65",
+]
+
+[project.scripts]
+aqfilter = "aqfilter.cli:main"
+
+[tool.setuptools]
+packages = ["aqfilter"]
