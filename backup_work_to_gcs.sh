@@ -44,7 +44,7 @@ fi
 
 # --- Assemble the work tree (explicit list; excludes data/, refs/, caches) ---
 ITEMS=(
-  aqfilter tests pyproject.toml requirements.txt
+  aqfilter tests pyproject.toml requirements.txt review_app
   README.md SPEC_audio_quality_filter.md IMPLEMENTATION_PLAN.md RUNBOOK.md
   SESSION_STATE.md
   refs.txt run_score_loop.sh backup_to_gcs.sh backup_work_to_gcs.sh
@@ -80,6 +80,12 @@ gcloud storage cp "$WORK/status.txt" "$GCS_DEST/work/status.txt"
 if [ -f review.zip ]; then
   gcloud storage cp review.zip "$GCS_DEST/review/review.zip"
   echo "uploaded $GCS_DEST/review/review.zip"
+fi
+
+# Self-contained review bundle (app + clips) as a direct download.
+if [ -f aqfilter_review_app.zip ]; then
+  gcloud storage cp aqfilter_review_app.zip "$GCS_DEST/review/aqfilter_review_app.zip"
+  echo "uploaded $GCS_DEST/review/aqfilter_review_app.zip"
 fi
 
 echo "--- backup contents ---"

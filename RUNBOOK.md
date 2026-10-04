@@ -116,10 +116,27 @@ Canonical GCS prefixes:
 |---|---|
 | `.../aqfilter/checkpoints/` | periodic `scores.csv` + `score.log` + `status.txt` |
 | `.../aqfilter/work/` | code/docs/logs tarballs + clean `scores.csv` |
-| `.../aqfilter/review/` | `review.zip` (listening material, direct download) |
+| `.../aqfilter/review/` | `review.zip` (listening material) + `aqfilter_review_app.zip` (app bundle) |
 
-Binary/media artifacts (`review.zip`, MP3s) are **not** pushed to GitHub —
-source only.
+Binary/media artifacts (`review.zip`, the app bundle, MP3s) are **not** pushed to
+GitHub — source only.
+
+### 4.1 Listening-review app
+
+`review_app/` is a small Flask UI for judging the clips and exporting the
+verdict. The self-contained bundle (app + `review/`) is published to
+`.../aqfilter/review/aqfilter_review_app.zip`:
+
+```bash
+gcloud storage cp gs://akbar-december-2024-backup/OSTRIS_Arabic_Suno_Finetuning/aqfilter/review/aqfilter_review_app.zip .
+unzip aqfilter_review_app.zip && cd aqfilter_review_app
+python -m pip install flask
+python review_app/app.py            # http://127.0.0.1:5000
+```
+
+Click **Export report** when done: it writes `./review_report/review_report.json`
+and `review_report.md` (the JSON is what the next calibration step consumes).
+Run tests with `cd review_app && python -m unittest discover -s tests -v`.
 
 ## 5. Notes
 

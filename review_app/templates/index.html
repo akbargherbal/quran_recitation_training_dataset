@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>aqfilter listening review</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header id="topbar">
+    <div class="brand">
+      <span class="dot"></span>
+      <strong>aqfilter</strong> listening review
+    </div>
+    <div class="progress-wrap" title="Clips rated">
+      <div class="progress"><div id="progress-bar"></div></div>
+      <span id="progress-text">0 / 0</span>
+    </div>
+    <div class="top-actions">
+      <span id="save-status" class="save-status">saved</span>
+      <button id="export-btn" class="btn btn-primary">Export report</button>
+    </div>
+  </header>
+
+  <div id="banner" class="banner hidden"></div>
+
+  <div id="layout">
+    <nav id="reciter-nav" class="reciter-nav"></nav>
+    <main id="main" class="main">
+      <div class="loading">Loading review data…</div>
+    </main>
+  </div>
+
+  <div id="export-modal" class="modal hidden">
+    <div class="modal-card">
+      <h2>Report exported</h2>
+      <div id="export-summary"></div>
+      <pre id="export-preview" class="preview"></pre>
+      <div class="modal-actions">
+        <a id="dl-md" class="btn" href="/download/review_report.md" download>Download Markdown</a>
+        <a id="dl-json" class="btn" href="/download/review_report.json" download>Download JSON</a>
+        <button id="close-modal" class="btn btn-primary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <audio id="player" preload="none"></audio>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
