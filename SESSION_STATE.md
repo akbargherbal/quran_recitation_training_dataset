@@ -157,6 +157,23 @@ setsid bash backup_to_gcs.sh    >/dev/null 2>&1 < /dev/null &
 Scores-only fallback: `gcloud storage cp "$DEST/checkpoints/scores.csv" ./scores.csv`
 then start the two jobs above.
 
+### OpenCode session continuity (separate tool, separate store)
+
+The agent session is also backed up with
+[`vm-continuity`](https://github.com/akbargherbal/vm-continuity) (cloned at
+`/content/vm-continuity`), independent of the aqfilter store:
+
+- **Session:** `ses_efab17986ffeabT6Yhuerxczxe` — "Quran reciter finetuning implementation plan"
+- **Store:** `gs://akbar-december-2024-backup/opencode_sessions/by_host/93aaaef1bef7/`
+  (`opencode.db` + `sessions/<id>.json` + config). opencode's ~5.7 GB workspace
+  `snapshot/` is intentionally **skipped** (`CONTINUITY_SIDE_MAX_MB`, default 200 MB).
+- **Keep current:** a detached watch loop runs `capture`+`ship` every 5 min.
+  Health: `cd /content/vm-continuity && python3 continuity.py status`.
+- **Restore on a fresh VM:** `python3 continuity.py pull` then
+  `python3 continuity.py restore opencode -- --mode db` (or `--mode export`).
+- **Note:** OpenCode v2.0.22 moved export under `session`; fixed + pushed upstream
+  as commit `56eae4b` (probe-and-cache CLI spelling; skip oversized side dirs).
+
 **Deliberately NOT backed up:** `data/` (5.6 GB, always re-downloadable — user's
 explicit instruction). Never delete or modify the source MP3s.
 
