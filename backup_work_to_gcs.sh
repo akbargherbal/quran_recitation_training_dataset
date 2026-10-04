@@ -49,7 +49,7 @@ ITEMS=(
   SESSION_STATE.md RESTORE_NEXT_SESSION.md
   refs.txt run_score_loop.sh backup_to_gcs.sh backup_work_to_gcs.sh
   score.log backup.log download.log
-  thresholds.json plots results review review.zip
+  thresholds.json thresholds_k0.25_all6.json plots results review review.zip review2 review2.zip
 )
 for item in "${ITEMS[@]}"; do
   [ -e "$item" ] && cp -r "$item" "$STAGE/" 2>/dev/null
@@ -80,6 +80,12 @@ gcloud storage cp "$WORK/status.txt" "$GCS_DEST/work/status.txt"
 if [ -f review.zip ]; then
   gcloud storage cp review.zip "$GCS_DEST/review/review.zip"
   echo "uploaded $GCS_DEST/review/review.zip"
+fi
+
+# Verification-round listening material (new thresholds), direct download.
+if [ -f review2.zip ]; then
+  gcloud storage cp review2.zip "$GCS_DEST/review/review2.zip"
+  echo "uploaded $GCS_DEST/review/review2.zip"
 fi
 
 # Self-contained review bundle (app + clips) as a direct download.
