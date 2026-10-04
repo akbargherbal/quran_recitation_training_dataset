@@ -76,6 +76,12 @@ gcloud storage cp "$WORK/aqfilter_work_${STAMP}.tar.gz" "$GCS_DEST/work/aqfilter
 [ -f "$STAGE/scores.csv" ] && gcloud storage cp "$STAGE/scores.csv" "$GCS_DEST/work/scores.csv"
 gcloud storage cp "$WORK/status.txt" "$GCS_DEST/work/status.txt"
 
+# Listening material as a direct download (also inside the work tarball).
+if [ -f review.zip ]; then
+  gcloud storage cp review.zip "$GCS_DEST/review/review.zip"
+  echo "uploaded $GCS_DEST/review/review.zip"
+fi
+
 echo "--- backup contents ---"
 tar -tzf "$WORK/aqfilter_work_latest.tar.gz" | sed 's#^\./##' | grep -v '/$' | sort
 echo "--- uploaded ---"

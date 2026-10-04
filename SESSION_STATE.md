@@ -125,6 +125,7 @@ Bucket: `gs://akbar-december-2024-backup/OSTRIS_Arabic_Suno_Finetuning/aqfilter/
 | `work/aqfilter_work_latest.tar.gz` | **all work**: code, tests, docs, ops scripts, logs, `scores.csv` | on demand |
 | `work/aqfilter_work_<ts>.tar.gz` | timestamped history of the above | on demand |
 | `work/scores.csv`, `work/status.txt` | clean scores + manifest | on demand |
+| `review/review.zip` | listening material, **direct download** (also inside the work tarball); binary, intentionally not on GitHub | after `review` |
 
 Refresh the full work snapshot (run after every completed stage):
 ```bash

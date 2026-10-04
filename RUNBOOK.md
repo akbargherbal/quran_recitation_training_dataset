@@ -95,15 +95,31 @@ python3 -m aqfilter review    --scores scores.csv --thresholds thresholds.json -
 python3 -m aqfilter filter    --scores scores.csv --thresholds thresholds.json --out-dir results/
 ```
 
-Checkpoint the later artifacts too:
+Checkpoint the later artifacts (`backup_work_to_gcs.sh` also uploads
+`review.zip` to the direct-download path automatically):
 
 ```bash
-DEST=gs://akbar-december-2024-backup/OSTRIS_Arabic_Suno_Finetuning/aqfilter/artifacts
-gcloud storage cp thresholds.json "$DEST/"
-gcloud storage cp -r plots "$DEST/"
-gcloud storage cp review.zip "$DEST/"
-gcloud storage cp -r results "$DEST/"
+cd /content/quran_recitations
+./backup_work_to_gcs.sh          # tar of code/docs/logs + scores.csv + review.zip
+
+# or copy individual artifacts to their canonical prefixes:
+BASE=gs://akbar-december-2024-backup/OSTRIS_Arabic_Suno_Finetuning/aqfilter
+gcloud storage cp thresholds.json "$BASE/work/artifacts/"
+gcloud storage cp -r plots        "$BASE/work/artifacts/"
+gcloud storage cp review.zip      "$BASE/review/review.zip"   # direct download
+gcloud storage cp -r results      "$BASE/work/artifacts/"
 ```
+
+Canonical GCS prefixes:
+
+| Prefix | Contents |
+|---|---|
+| `.../aqfilter/checkpoints/` | periodic `scores.csv` + `score.log` + `status.txt` |
+| `.../aqfilter/work/` | code/docs/logs tarballs + clean `scores.csv` |
+| `.../aqfilter/review/` | `review.zip` (listening material, direct download) |
+
+Binary/media artifacts (`review.zip`, MP3s) are **not** pushed to GitHub —
+source only.
 
 ## 5. Notes
 
