@@ -16,19 +16,25 @@ recitation MP3s. Full requirements are in
 
 ## 1. Status snapshot
 
-_As of **2026-10-04T07:32Z** (recompute with §4; do not trust this timestamp)._
+_As of **2026-10-04T10:22Z** (recompute with §4; do not trust this timestamp)._
 
 | Stage | State |
 |---|---|
 | Dataset download | ✅ done, **13,501** MP3s, ~5.6 GB, at `data/quran_dataset_AHH_long_aya/` |
 | Tool + tests | ✅ done, **12/12 tests pass** |
-| Full `score` | ⏳ **in progress**, **6,372 / 13,501** rows (~47%), 0 decode failures |
-| GCS checkpointing | ✅ running (every 10 min) |
+| Full `score` | ✅ done, **13,501 / 13,501** rows, all unique, **0 decode failures** |
+| GCS checkpointing | ✅ complete (final snapshot rows=13501) |
 | Code on GitHub | ✅ pushed (see §6) |
-| `calibrate` / `plot` / `review` / `filter` | ⬜ not started (blocked on scoring) |
+| `calibrate` | ✅ done → `thresholds.json` |
+| `plot` | ✅ done → `plots/*.png`, `plots/summary.csv` |
+| `review` / `filter` | ⬜ **next: `review --zip`, then STOP for the user's listening verdict** |
 
-The next action when scoring finishes is **`calibrate` + `plot`, then STOP and
-report to the user** (spec handoff step 3). See §7.
+**Current pass rates after calibrate** (k=0.25, see §7 for what to do):
+Abdul_Basit_Murattal 23.4%, Hudhaify 71.4%, Husary 34.2% — all within the
+10–95% sanity band, so no calibration warnings fired.
+
+The next action is **`review --zip`, hand the user the zip, then STOP and wait
+for the listening verdict before changing `--k`** (spec handoff step 4). See §7.
 
 ---
 
@@ -89,17 +95,18 @@ rows and the tqdm bar/vm buffer; the number above is good enough.
 
 ---
 
-## 5. Background jobs currently running
+## 5. Background jobs (all completed)
 
-All were launched detached with `setsid`, so they survive an SSH disconnect
-while the VM stays up:
+Scoring finished at 10:10:37Z (`supervisor: complete`); the checkpoint loop
+uploaded the final `rows=13501` snapshot and exited. All were launched detached
+with `setsid`, so they survived SSH disconnects.
 
 | Job | Script | Behavior |
 |---|---|---|
-| Scorer | `run_score_loop.sh` | loops `aqfilter score ... --resume` until all 13,501 rows exist; auto-restarts after a kill/crash |
-| Checkpointer | `backup_to_gcs.sh` | every 10 min uploads a cleaned `scores.csv` snapshot; exits when complete |
+| Scorer | `run_score_loop.sh` | looped `aqfilter score ... --resume` until all 13,501 rows existed; auto-restarted after a kill/crash |
+| Checkpointer | `backup_to_gcs.sh` | uploaded a cleaned `scores.csv` snapshot every 10 min; exited on completion |
 
-To restart everything from scratch (e.g. after a VM reboot), see §6.
+They are **not running now** (nothing left to score). To resume/restart, see §6.
 
 ---
 
@@ -151,13 +158,11 @@ explicit instruction). Never delete or modify the source MP3s.
 
 ## 7. What remains (ordered), with STOP gates
 
-1. **Wait for scoring to finish** (all 13,501 rows). Verify 0 unexpected decode
-   failures and no duplicate filenames. Dedupe (`drop_duplicates("filename")`)
-   only if duplicates appeared.
-2. `calibrate` → `thresholds.json` + printed per-reciter table; `plot` → PNGs +
-   `summary.csv`. Persist: `./backup_work_to_gcs.sh`.
-3. 🛑 **STOP AND REPORT** the threshold table + plots to the user (spec handoff
-   step 3). **Do not choose `--k` autonomously.**
+1. ✅ **Scoring done** — 13,501/13,501 rows, all unique, 0 decode failures.
+2. ✅ `calibrate` → `thresholds.json`; ✅ `plot` → `plots/*.png` +
+   `plots/summary.csv`; backup refreshed with `./backup_work_to_gcs.sh`.
+3. 🛑 **Currently at STOP gate 1** (spec handoff step 3): threshold table + plots
+   reported to the user. **Do not choose `--k` autonomously — wait.**
 4. `review --zip` → `review.zip` (~45 clips); give user path/size. Persist.
 5. 🛑 **STOP AND WAIT for the user's listening verdict** per reciter
    (too loose / about right / too strict).
