@@ -30,6 +30,7 @@ _As of **2026-10-04T10:22Z** (recompute with §4; do not trust this timestamp)._
 | Listening-review app | ✅ `review_app/` (Flask UI) built + tested (**15 tests**); bundle `aqfilter_review_app.zip` on GCS |
 | Listening verdict | ✅ returned: **too strict** for all three reciters |
 | `filter` | ✅ done → `results/` (**9,492 kept / 4,009 rejected**) |
+| Filtered dataset | ✅ `AHH_Quran_Long_Aya_Filtered_DATASET.zip` (3.69 GiB, 9,492 clips + `README.md` + `MANIFEST.csv`) on GCS (see §6) |
 
 **Calibration (final):** the "too strict" verdict → `k=0.5`, **and** `bandwidth_hz`
 + `bak_mos` dropped via the new `calibrate --drop-metric` flag. Rationale:
@@ -141,6 +142,21 @@ Refresh the full work snapshot (run after every completed stage):
 ```bash
 cd /content/quran_recitations && ./backup_work_to_gcs.sh
 ```
+
+### Filtered dataset deliverable
+
+The final selection is packaged as a standalone, self-describing zip **next to the
+source dataset** (outside the `aqfilter/` prefix):
+
+```
+gs://akbar-december-2024-backup/OSTRIS_Arabic_Suno_Finetuning/AHH_Quran_Long_Aya_Filtered_DATASET.zip
+gs://akbar-december-2024-backup/OSTRIS_Arabic_Suno_Finetuning/AHH_Quran_Long_Aya_Filtered_DATASET.zip.sha256
+```
+
+- 9,492 kept MP3s (flat, original filenames) + `README.md` (method/spec) +
+  `MANIFEST.csv` (metrics per file); **3.69 GiB**; SHA-256 in the `.sha256` object.
+- Built from `results/keep_list.txt`; MP3s are byte-identical originals (selection,
+  not re-encode).
 
 ### GitHub (source code)
 - Repo: https://github.com/akbargherbal/quran_recitation_training_dataset
