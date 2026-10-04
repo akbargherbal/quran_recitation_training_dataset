@@ -22,6 +22,14 @@ def _parse_k_reciter(values: list[str] | None) -> dict[str, float]:
     return out
 
 
+def _parse_metrics(values: list[str] | None) -> set[str]:
+    """Collect --drop-metric values (each may be one name or comma-separated)."""
+    out: set[str] = set()
+    for item in values or []:
+        out.update(part.strip() for part in item.split(",") if part.strip())
+    return out
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="aqfilter",
@@ -48,6 +56,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_cal.add_argument("--k", type=float, default=DEFAULT_K, help="margin factor (default 0.25)")
     p_cal.add_argument("--k-reciter", action="append", default=None, metavar="NAME=VAL",
                        help="per-reciter k override (repeatable)")
+    p_cal.add_argument("--drop-metric", action="append", default=None, metavar="METRIC",
+                       help="metric to exclude from thresholds (repeatable or comma-separated)")
 
     p_plot = sub.add_parser("plot", help="per-reciter histograms + summary")
     p_plot.add_argument("--scores", required=True)
@@ -103,6 +113,7 @@ def main(argv: list[str] | None = None) -> int:
             out=args.out,
             k=args.k,
             k_reciter=_parse_k_reciter(args.k_reciter),
+            drop_metrics=_parse_metrics(args.drop_metric),
         )
     elif args.command == "plot":
         from aqfilter.plotting import run_plot

@@ -59,8 +59,10 @@ def compute_thresholds(
     refs_path: str | Path,
     k: float = DEFAULT_K,
     k_reciter: dict[str, float] | None = None,
+    drop_metrics: set[str] | None = None,
 ) -> dict:
     k_reciter = k_reciter or {}
+    drop = set(drop_metrics or ())
     refs_by_reciter = _resolve_refs(df, refs_path)
 
     reciters_out: dict[str, dict] = {}
@@ -70,6 +72,8 @@ def compute_thresholds(
         k_eff = float(k_reciter.get(reciter, k))
         metrics_out: dict[str, dict] = {}
         for metric, direction, floor in THRESHOLD_METRICS:
+            if metric in drop:
+                continue
             ref_values = [float(v) for v in ref_rows[metric].tolist() if pd.notna(v)]
             series = reciter_df[metric].dropna()
             if series.size >= 2:
@@ -100,6 +104,7 @@ def compute_thresholds(
         "k_effective": {
             r: float(k_reciter.get(r, k)) for r in reciters_out
         },
+        "dropped_metrics": sorted(drop),
         "global": dict(GLOBAL_GATES),
         "reciters": reciters_out,
     }
@@ -185,9 +190,12 @@ def run_calibrate(
     out: str | Path,
     k: float = DEFAULT_K,
     k_reciter: dict[str, float] | None = None,
+    drop_metrics: set[str] | None = None,
 ) -> dict:
     df = load_scores(scores)
-    thresholds = compute_thresholds(df, refs, k=k, k_reciter=k_reciter)
+    thresholds = compute_thresholds(
+        df, refs, k=k, k_reciter=k_reciter, drop_metrics=drop_metrics
+    )
     out = Path(out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(thresholds, indent=2), encoding="utf-8")

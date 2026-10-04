@@ -21,24 +21,31 @@ _As of **2026-10-04T10:22Z** (recompute with §4; do not trust this timestamp)._
 | Stage | State |
 |---|---|
 | Dataset download | ✅ done, **13,501** MP3s, ~5.6 GB, at `data/quran_dataset_AHH_long_aya/` |
-| Tool + tests | ✅ done, **12/12 tests pass** |
+| Tool + tests | ✅ done, **28/28 tests pass** |
 | Full `score` | ✅ done, **13,501 / 13,501** rows, all unique, **0 decode failures** |
 | GCS checkpointing | ✅ complete (final snapshot rows=13501) |
 | Code on GitHub | ✅ pushed (see §6) |
-| `calibrate` | ✅ done → `thresholds.json` |
-| `plot` | ✅ done → `plots/*.png`, `plots/summary.csv` |
-| `review --zip` | ✅ done → `review.zip` (21.8 MiB, 45 clips) |
+| `calibrate` / `plot` | ✅ first pass `k=0.25` → `thresholds_k0.25_all6.json`; **re-calibrated** (see below) |
+| `review --zip` | ✅ done → `review.zip` (21.8 MiB, 45 clips) + `review2.zip` (verification round) |
 | Listening-review app | ✅ `review_app/` (Flask UI) built + tested (**15 tests**); bundle `aqfilter_review_app.zip` on GCS |
-| `filter` | ⬜ blocked on the user's listening verdict |
+| Listening verdict | ✅ returned: **too strict** for all three reciters |
+| `filter` | ✅ done → `results/` (**9,492 kept / 4,009 rejected**) |
 
-**Current pass rates after calibrate** (k=0.25, see §7 for what to do):
-Abdul_Basit_Murattal 23.4%, Hudhaify 71.4%, Husary 34.2% — all within the
-10–95% sanity band, so no calibration warnings fired.
+**Calibration (final):** the "too strict" verdict → `k=0.5`, **and** `bandwidth_hz`
++ `bak_mos` dropped via the new `calibrate --drop-metric` flag. Rationale:
+`bandwidth_hz` is bimodal for Abdul (references are all high-mode, so the
+threshold amputates the ~7 kHz mode the listener liked, and bad clips passed it
+*more* than good ones — no `k` can fix that); `bak_mos` was mis-placed for Husary
+(rejected 10/13 clips the listener called good). Hudhaify's good/bad labels were
+not separable by any metric (~coin-flip), so its verdict was applied only as a
+mild global loosen — don't over-trust that reciter's boundary.
 
-**Currently at STOP gate 2** (spec handoff step 4): `review.zip` and the
-listening-review app (`review_app/`, bundle on GCS) have been delivered. The user
-listens in the app and returns `review_report.json` / `review_report.md`.
-**Wait for that verdict before changing `--k`.** See §7.
+**Pass rates:** Abdul_Basit_Murattal **53.0%** (2,399/4,525), Hudhaify **91.2%**
+(4,143/4,542), Husary **66.5%** (2,950/4,434). On the 45 labeled clips, balanced
+accuracy improved vs `k=0.25` (Abdul 0.55→0.70, Husary 0.65→0.85).
+
+**STOP gate 2 passed.** A verification round `review2/` (+ `review2.zip`) was
+generated against the new thresholds — optional re-listen before final delivery.
 
 ---
 
@@ -48,7 +55,7 @@ listens in the app and returns `review_report.json` / `review_report.md`.
 
 ```
 aqfilter score     --data DIR --out scores.csv [--workers N] [--resume]
-aqfilter calibrate --scores scores.csv --refs FILE_OR_DIR --out thresholds.json [--k 0.25] [--k-reciter NAME=VAL ...]
+aqfilter calibrate --scores scores.csv --refs FILE_OR_DIR --out thresholds.json [--k 0.25] [--k-reciter NAME=VAL ...] [--drop-metric METRIC ...]
 aqfilter plot      --scores scores.csv --refs FILE_OR_DIR --out plots/ [--thresholds thresholds.json]
 aqfilter review    --scores scores.csv --thresholds thresholds.json --data DIR --out review/ [--n 5] [--zip]
 aqfilter filter    --scores scores.csv --thresholds thresholds.json --out-dir results/ [--copy-to DIR]
@@ -186,23 +193,28 @@ explicit instruction). Never delete or modify the source MP3s.
    `plots/summary.csv`; backup refreshed with `./backup_work_to_gcs.sh`.
 3. ✅ STOP gate 1 passed: threshold table + plots reported to the user.
 4. ✅ `review --zip` → `review.zip` (21.8 MiB, 45 clips); path/size given.
-5. 🛑 **Currently at STOP gate 2**: the user reviews via the `review_app/` Flask
-   UI and returns `review_report.json`/`.md` with the per-reciter verdict
-   (too loose / about right / too strict). **Do not change `--k` yet.**
-6. Adjust `--k` (globally or `--k-reciter NAME=VAL`) → re-run `calibrate`
-   (and `review` if wanted). **No rescoring.** Persist.
-7. `filter` → `results/{keep.csv,reject.csv,summary.md,keep_list.txt}` (+ optional
-   `--copy-to`). Persist.
-8. Final delivery of all artifacts; keep `scores.csv` so future re-thresholding
-   is free.
+5. ✅ STOP gate 2 passed: the user reviewed via `review_app/` and returned
+   `review_report.md` — verdict **too strict** for all three reciters.
+6. ✅ Re-calibrated: `--k 0.5 --drop-metric bandwidth_hz,bak_mos` (see §1).
+   `review2/` generated for optional verification. **No rescoring.**
+7. ✅ `filter` → `results/{keep.csv,reject.csv,summary.md,keep_list.txt}`
+   (9,492 kept / 4,009 rejected). Persist.
+8. ⬜ Final delivery of all artifacts; keep `scores.csv` so future re-thresholding
+   (e.g. reverting to `thresholds_k0.25_all6.json`) is free.
 
 ---
 
 ## 8. Key decisions, gotchas, fixed bugs
 
-- **`--k` is NOT chosen yet.** It is decided only after the user listens to
-  `review.zip`. The references span excellent→acceptable, so thresholds anchor
-  at the *worst* reference minus `max(floor, k*iqr)`.
+- **`--k` and the metric set are now settled** (after the listening review):
+  `k=0.5`, metrics `ovrl_mos`/`sig_mos`/`snr_est_db`/`noise_floor_db`
+  (`bandwidth_hz` + `bak_mos` dropped via `--drop-metric`). Change only with a new
+  listening round. Thresholds anchor at the *worst* reference minus
+  `max(floor, k*iqr)`.
+- **`bandwidth_hz` is unreliable on bimodal reciters** (Abdul): the references all
+  sit in the high mode, so the threshold deletes the low mode the listener liked;
+  bad clips passed it *more* than good ones. Prefer `--drop-metric bandwidth_hz`
+  over inflating `k` to compensate.
 - **Two intentional stop gates** (spec §13): after `calibrate`/`plot`, and after
   `review`. Respect them.
 - **BUG fixed:** `bandwidth_hz` was inflated by `np.convolve(mode="same")`
@@ -230,14 +242,15 @@ explicit instruction). Never delete or modify the source MP3s.
 
 ```
 aqfilter/                     # the tool (cli, score, calibrate, plotting, review, filtering, metrics, ...)
-tests/                        # 12 tests (naming, metrics synthetic, calibrate/filter, cli smoke)
+tests/                        # 28 tests (naming, metrics synthetic, calibrate/filter, cli smoke)
 data/                         # 13,501 source MP3s (NOT backed up, re-downloadable)
 refs/                         # 9 extracted reference MP3s
 refs.txt                      # 9 reference basenames (threshold anchors)
 scores.csv                    # THE expensive artifact (checkpointed to GCS)
 thresholds.json               # generated by calibrate (may not exist yet)
 plots/                        # generated by plot
-review/ , review.zip          # generated by review
+review/ , review.zip          # generated by review (round 1, k=0.25)
+review2/ , review2.zip        # generated by review (round 2, final thresholds)
 review_app/                   # Flask UI to review clips + export the verdict report
 results/                      # generated by filter
 run_score_loop.sh             # detached scoring supervisor
@@ -265,9 +278,9 @@ setsid bash backup_to_gcs.sh  >/dev/null 2>&1 < /dev/null &
 ./backup_work_to_gcs.sh
 
 # --- post-scoring pipeline (fast) ---
-python3 -m aqfilter calibrate --scores scores.csv --refs refs.txt --out thresholds.json
+python3 -m aqfilter calibrate --scores scores.csv --refs refs.txt --out thresholds.json --k 0.5 --drop-metric bandwidth_hz,bak_mos   # FINAL settings
 python3 -m aqfilter plot      --scores scores.csv --refs refs.txt --out plots/ --thresholds thresholds.json
-python3 -m aqfilter review    --scores scores.csv --thresholds thresholds.json --data data/ --out review/ --zip
+python3 -m aqfilter review    --scores scores.csv --thresholds thresholds.json --data data/ --out review2/ --zip
 python3 -m aqfilter filter    --scores scores.csv --thresholds thresholds.json --out-dir results/
 
 # --- listening-review app (after review/) ---

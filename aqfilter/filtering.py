@@ -58,8 +58,13 @@ def _write_summary_md(
     lines.append("## Thresholds used")
     lines.append("")
     lines.append(f"- Global gates: `{json.dumps(thresholds.get('global', {}))}`")
+    dropped = thresholds.get("dropped_metrics") or []
+    if dropped:
+        lines.append(f"- Metrics dropped: `{', '.join(dropped)}`")
+    k_eff = thresholds.get("k_effective", {})
     for reciter, info in sorted(thresholds.get("reciters", {}).items()):
-        lines.append(f"- **{reciter}** (k={info.get('k')}):")
+        k_val = k_eff.get(reciter, thresholds.get("k_default"))
+        lines.append(f"- **{reciter}** (k={k_val}):")
         for metric, m in info.get("metrics", {}).items():
             op = ">=" if m["direction"] == "higher" else "<="
             lines.append(f"    - `{metric} {op} {float(m['threshold']):.4g}`")

@@ -107,3 +107,22 @@ def test_k_change_does_not_need_rescoring(tmp_path: Path):
     run_calibrate(scores, refs, out2, k=1.0)
     assert scores.stat().st_mtime_ns == mtime
     assert json.loads(out1.read_text()) != json.loads(out2.read_text())
+
+
+def test_drop_metric_removes_thresholds(tmp_path: Path):
+    scores, refs = _make_scores(tmp_path)
+    out = tmp_path / "dropped.json"
+    run_calibrate(scores, refs, out, drop_metrics={"bandwidth_hz", "bak_mos"})
+    thresholds = json.loads(out.read_text())
+
+    assert thresholds["dropped_metrics"] == ["bak_mos", "bandwidth_hz"]
+    for info in thresholds["reciters"].values():
+        assert "bandwidth_hz" not in info["metrics"]
+        assert "bak_mos" not in info["metrics"]
+        assert "ovrl_mos" in info["metrics"]
+
+    # A row that only fails a dropped metric must now pass.
+    df = pd.read_csv(scores)
+    ref_row = df[df["filename"] == refs.read_text().split()[0]].iloc[0].copy()
+    ref_row["bandwidth_hz"] = 1.0  # would fail the old bandwidth threshold
+    assert not any("bandwidth" in r for r in evaluate_row(ref_row, thresholds))

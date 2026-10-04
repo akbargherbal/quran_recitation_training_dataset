@@ -11,9 +11,12 @@ REF_Quran_MP3.zip
 scores.csv
 scores.csv.log
 thresholds.json
+thresholds_*.json
 plots/
 review/
 review.zip
+review2/
+review2.zip
 results/
 review_report/
 aqfilter_review_app.zip

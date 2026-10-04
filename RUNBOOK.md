@@ -88,11 +88,19 @@ pgrep -af "backup_to_gcs.sh" | grep -v pgrep
 ## 4. After scoring (fast, no rescoring)
 
 ```bash
-python3 -m aqfilter calibrate --scores scores.csv --refs refs.txt --out thresholds.json
+# FINAL settings (from the listening review; rationale in SESSION_STATE.md §1):
+python3 -m aqfilter calibrate --scores scores.csv --refs refs.txt --out thresholds.json \
+    --k 0.5 --drop-metric bandwidth_hz,bak_mos
 python3 -m aqfilter plot      --scores scores.csv --refs refs.txt --out plots/ --thresholds thresholds.json
-python3 -m aqfilter review    --scores scores.csv --thresholds thresholds.json --data data/ --out review/ --zip
-# listen to review.zip, then adjust --k if needed and re-run calibrate/review
+# optional verification round against the new boundary:
+python3 -m aqfilter review    --scores scores.csv --thresholds thresholds.json --data data/ --out review2/ --zip
 python3 -m aqfilter filter    --scores scores.csv --thresholds thresholds.json --out-dir results/
+
+# `--drop-metric NAME` (repeatable or comma-separated) excludes a metric from every
+# reciter's thresholds; recorded as `dropped_metrics` in thresholds.json.
+# `--k-reciter NAME=VAL` (repeatable) overrides k per reciter.
+# Round-1 calibration (k=0.25, all six metrics) is preserved at
+# thresholds_k0.25_all6.json for quick A/B.
 ```
 
 Checkpoint the later artifacts (`backup_work_to_gcs.sh` also uploads
