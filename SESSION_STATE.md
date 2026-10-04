@@ -27,14 +27,16 @@ _As of **2026-10-04T10:22Z** (recompute with §4; do not trust this timestamp)._
 | Code on GitHub | ✅ pushed (see §6) |
 | `calibrate` | ✅ done → `thresholds.json` |
 | `plot` | ✅ done → `plots/*.png`, `plots/summary.csv` |
-| `review` / `filter` | ⬜ **next: `review --zip`, then STOP for the user's listening verdict** |
+| `review --zip` | ✅ done → `review.zip` (21.8 MiB, 45 clips) |
+| `filter` | ⬜ blocked on the user's listening verdict |
 
 **Current pass rates after calibrate** (k=0.25, see §7 for what to do):
 Abdul_Basit_Murattal 23.4%, Hudhaify 71.4%, Husary 34.2% — all within the
 10–95% sanity band, so no calibration warnings fired.
 
-The next action is **`review --zip`, hand the user the zip, then STOP and wait
-for the listening verdict before changing `--k`** (spec handoff step 4). See §7.
+**Currently at STOP gate 2** (spec handoff step 4): `review.zip` has been
+delivered. **Wait for the user's per-reciter listening verdict before changing
+`--k`.** See §7.
 
 ---
 
@@ -161,11 +163,10 @@ explicit instruction). Never delete or modify the source MP3s.
 1. ✅ **Scoring done** — 13,501/13,501 rows, all unique, 0 decode failures.
 2. ✅ `calibrate` → `thresholds.json`; ✅ `plot` → `plots/*.png` +
    `plots/summary.csv`; backup refreshed with `./backup_work_to_gcs.sh`.
-3. 🛑 **Currently at STOP gate 1** (spec handoff step 3): threshold table + plots
-   reported to the user. **Do not choose `--k` autonomously — wait.**
-4. `review --zip` → `review.zip` (~45 clips); give user path/size. Persist.
-5. 🛑 **STOP AND WAIT for the user's listening verdict** per reciter
-   (too loose / about right / too strict).
+3. ✅ STOP gate 1 passed: threshold table + plots reported to the user.
+4. ✅ `review --zip` → `review.zip` (21.8 MiB, 45 clips); path/size given.
+5. 🛑 **Currently at STOP gate 2**: awaiting the user's per-reciter listening
+   verdict (too loose / about right / too strict). **Do not change `--k` yet.**
 6. Adjust `--k` (globally or `--k-reciter NAME=VAL`) → re-run `calibrate`
    (and `review` if wanted). **No rescoring.** Persist.
 7. `filter` → `results/{keep.csv,reject.csv,summary.md,keep_list.txt}` (+ optional
